@@ -6,9 +6,9 @@
 <title>FIKA 상세페이지 만들기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jost:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareRound@1.0/nanumsquareround.css">
+<link crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css">
+<link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareRound@1.0/nanumsquareround.css">
 <style>
 /* 손글씨 폰트: assets/fonts/ 에 NanumDdarEGeEomMaGa.ttf 를 넣으면 원본 폰트로 나옵니다. 없으면 Gaegu로 대체됩니다. */
 @font-face{font-family:'FikaHand';src:url('assets/fonts/NanumDdarEGeEomMaGa.ttf') format('truetype');font-display:swap}
@@ -56,7 +56,7 @@ textarea{resize:vertical;line-height:1.5}
 .cupbox .lab{top:20px}
 .cn{position:absolute;top:0;width:220px;height:100%}
 .cn .ic{position:absolute;top:80px;left:0;right:0;height:150px;display:flex;align-items:center;justify-content:center}
-.cn .ic img{max-width:135px;max-height:140px}
+.cn .ic img{display:block;max-width:150px;max-height:150px}
 .cn .tg{position:absolute;top:246px;left:0;right:0;text-align:center;font:700 28px/36px 'NanumSquareRound','NanumSquare',sans-serif;color:#4f4c48;white-space:nowrap}
 .hl{margin:78px 0 0 62px;width:723px;text-align:center;font-size:32px;line-height:71px;color:#4d4a46;white-space:pre-line}
 .hl span{background:#e5c3bb;padding:7px 8px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
@@ -154,7 +154,7 @@ body.bare .app{display:block;padding:0;max-width:none}
 </div></div></main>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 (function(){
@@ -175,7 +175,7 @@ var TW=[
  ['자스민','1f33c'],['사과','1f34e'],['포도','1f347'],['코코넛','1f965'],['바나나','1f34c'],['파인애플','1f34d'],['망고','1f96d'],
  ['쿠키','1f36a'],['캐러멜','1f36e'],['카라멜','1f36e'],['사탕','1f36c'],['크루아상','1f950'],['허브','1f33f'],['녹차','1f375'],
  ['홍차','1f375'],['우유','1f95b'],['케이크','1f370'],['토마토','1f345'],['수박','1f349'],['키위','1f95d'],['후추','1f336'],
- ['와인','1f377'],['위스키','1f943'],['스모키','1f525'],['나무','1fab5'],['곡물','1f33e'],['커피','2615'],['배','1f350'],['밤','1f330']
+ ['와인','1f377'],['위스키','1f943'],['스모키','1f525'],['나무','1fab5'],['곡물','1f33e'],['커피','2615'],['배','1f350'],['밤','1f330'],['굴','1f9aa']
 ];
 function findIcon(t){
  if(!t) return null;
@@ -227,7 +227,18 @@ AR.forEach(function(a,i){
 
 /* ---------- 미리보기 그리기 ---------- */
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function imgTag(src,cors){return '<img src="'+src+'"'+(cors?' crossorigin="anonymous"':'')+' alt="">'}
+function imgTag(src,cors,kind){return '<img src="'+src+'"'+(cors?' crossorigin="anonymous"':'')+(kind?' data-k="'+kind+'"':'')+' alt="">'}
+/* 아이콘 크기를 숫자로 정해 둡니다. (저장할 때 잘리거나 찌그러지는 것을 막기 위함) */
+function fitIcon(im){
+ var k=im.getAttribute('data-k'),box=k==='tw'?112:(k==='up'?140:150);
+ function go(){
+  var w=im.naturalWidth,h=im.naturalHeight;
+  if(!w||!h){w=h=100}
+  var s=(k==='own')?Math.min(1,box/w,box/h):Math.min(box/w,box/h);
+  im.style.width=Math.round(w*s)+'px';im.style.height=Math.round(h*s)+'px';
+ }
+ if(im.complete&&im.naturalWidth) go(); else im.addEventListener('load',go);
+}
 
 function render(){
  $('o-en').textContent=S.en; $('o-ko').textContent=S.ko;
@@ -235,11 +246,12 @@ function render(){
  var h='';
  for(var i=0;i<3;i++){
   var t=(S.cups[i]||'').trim(), f=findIcon(t), src=custom[i]?{src:custom[i],own:true}:f;
-  h+='<div class="cn" style="left:'+CUPL[i]+'px"><div class="ic">'+(src?imgTag(src.src,!src.own&&!custom[i]):'')+'</div><div class="tg">'+(t?'#'+esc(t):'')+'</div></div>';
+  h+='<div class="cn" style="left:'+CUPL[i]+'px"><div class="ic">'+(src?imgTag(src.src,!src.own&&!custom[i],custom[i]?'up':(src.own?'own':'tw')):'')+'</div><div class="tg">'+(t?'#'+esc(t):'')+'</div></div>';
   $('pv'+i).innerHTML=src?imgTag(src.src,false):'<span style="font-size:11px;color:#bbb">아이콘 없음</span>';
   var st=$('st'+i); st.textContent=custom[i]?'직접 올린 이미지':(f?(f.own?'내 아이콘':'무료 아이콘'):(t?'사전에 없음':'')); st.className='st'+((!f&&!custom[i]&&t)?' no':'');
  }
  $('o-cups').innerHTML=h;
+ Array.prototype.forEach.call(document.querySelectorAll('#o-cups .ic img'),fitIcon);
  /* 강조 문단 */
  $('o-hl').textContent=S.hl;
  /* 로스팅 */
@@ -359,12 +371,12 @@ $('ocr-copy').addEventListener('click',function(){
 /* ---------- 저장 ---------- */
 function status(t){$('status').textContent=t}
 function capture(){
- if(typeof html2canvas==='undefined'){status('저장 도구를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');return Promise.reject()}
+ if(typeof htmlToImage==='undefined'){status('저장 도구를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');return Promise.reject()}
+ var node=$('stage');
+ var opt={pixelRatio:1,width:850,height:node.offsetHeight,backgroundColor:'#ebeae8',style:{transform:'none',transformOrigin:'top left'}};
  var fp=document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve();
- return fp.then(function(){
-  return html2canvas($('stage'),{scale:1,useCORS:true,backgroundColor:'#ebeae8',width:850,height:$('stage').offsetHeight,
-   onclone:function(d){var s=d.getElementById('stage');s.style.transform='none'}});
- });
+ /* 첫 번째는 이미지·폰트를 불러오게 하는 준비용, 두 번째가 실제 결과입니다. */
+ return fp.then(function(){return htmlToImage.toCanvas(node,opt)}).then(function(){return htmlToImage.toCanvas(node,opt)});
 }
 function dl(canvas,name){
  return new Promise(function(res){
