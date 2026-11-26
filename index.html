@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIKA 상세페이지 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquareRound@1.0/nanumsquareround.css">
+<style>
+/* 손글씨 폰트: assets/fonts/ 에 NanumDdarEGeEomMaGa.ttf 를 넣으면 원본 폰트로 나옵니다. 없으면 Gaegu로 대체됩니다. */
+@font-face{font-family:'FikaHand';src:url('assets/fonts/NanumDdarEGeEomMaGa.ttf') format('truetype');font-display:swap}
+*{box-sizing:border-box}
+body{margin:0;font-family:'NanumSquare',system-ui,sans-serif;background:#f4f3f1;color:#2b2926}
+.app{display:grid;grid-template-columns:400px minmax(0,1fr);gap:24px;padding:20px;max-width:1300px;margin:0 auto}
+.panel{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;background:#fff;border:1px solid #e3e0dc;border-radius:12px;padding:18px}
+.panel h1{font-size:17px;margin:0 0 4px}
+.panel .sub{font-size:12px;color:#8a857e;margin:0 0 14px}
+.panel h2{font-size:13px;margin:18px 0 6px;color:#5a554f;border-top:1px solid #eee;padding-top:14px}
+.panel h2:first-of-type{border-top:0;padding-top:0}
+label.l{display:block;font-size:12px;color:#7a756e;margin:8px 0 3px}
+input[type=text],textarea{width:100%;font:inherit;font-size:14px;padding:8px 10px;border:1px solid #d9d5cf;border-radius:8px;background:#fff}
+textarea{resize:vertical;line-height:1.5}
+.cups{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cup{text-align:center}
+.cup .pv{height:54px;display:flex;align-items:center;justify-content:center;background:#f4f3f1;border-radius:8px;margin-top:6px}
+.cup .pv img{max-height:46px;max-width:60px}
+.cup .st{font-size:11px;color:#8a857e;margin-top:3px;min-height:14px}
+.cup .st.no{color:#c0603a}
+.btn{font:inherit;font-size:12px;padding:6px 10px;border:1px solid #cfcac3;background:#fff;border-radius:8px;cursor:pointer}
+.btn:hover{background:#f4f3f1}
+.btn.main{background:#d98b86;border-color:#d98b86;color:#fff;font-size:14px;padding:10px 14px}
+.btn.main:hover{background:#cb7d78}
+.roast{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.roast button{border:1px solid #d9d5cf;background:#fff;border-radius:8px;padding:6px 2px 4px;cursor:pointer;font:inherit;font-size:9px;color:#7a756e}
+.roast button img{display:block;height:34px;margin:0 auto 3px}
+.roast button.on{border-color:#d98b86;background:#fbeeec;color:#a85a55}
+.sl{display:grid;grid-template-columns:52px 1fr 32px;gap:8px;align-items:center;margin:5px 0;font-size:13px}
+.sl input[type=range]{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.hint{font-size:11px;color:#9a958e;margin-top:6px;line-height:1.5}
+.view{min-width:0}
+#scaleWrap{width:100%;overflow:hidden}
+#stage{width:850px;background:#ebeae8;position:relative;overflow:hidden;transform-origin:0 0;font-family:'NanumSquare',sans-serif}
+#stage *{box-sizing:border-box}
+.hand{font-family:'FikaHand','Gaegu','Nanum Pen Script',cursive}
+#stage img.top{display:block;width:850px;height:1700px}
+.ttl{padding-top:14px;text-align:center;color:#1b1b1b}
+.ttl .en{font-size:44px;line-height:51px;height:51px;white-space:nowrap}
+.ttl .ko{font-size:34px;line-height:38px;height:38px;margin-top:5px;white-space:nowrap}
+.box{position:relative;margin-left:62px;width:723px;border:1px solid #8e8c7f}
+.box .lab{position:absolute;left:0;right:0;text-align:center;font:400 28px/1 'Jost','NanumSquare',sans-serif;letter-spacing:.5px;color:#8e8c7f}
+.cupbox{margin-top:43px;height:315px}
+.cupbox .lab{top:20px}
+.cn{position:absolute;top:0;width:220px;height:100%}
+.cn .ic{position:absolute;top:80px;left:0;right:0;height:150px;display:flex;align-items:center;justify-content:center}
+.cn .ic img{max-width:135px;max-height:140px}
+.cn .tg{position:absolute;top:246px;left:0;right:0;text-align:center;font:700 28px/36px 'NanumSquareRound','NanumSquare',sans-serif;color:#4f4c48;white-space:nowrap}
+.hl{margin:78px 0 0 62px;width:723px;text-align:center;font-size:32px;line-height:71px;color:#4d4a46;white-space:pre-line}
+.hl span{background:#e5c3bb;padding:7px 8px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.roastbox{margin-top:61px;height:282px}
+.roastbox .lab{top:20px}
+.roastbox .bean{position:absolute;top:115px;width:69px;height:105px}
+.roastbox .chk{position:absolute;top:63px;width:41px;height:41px}
+.roastbox .rn{position:absolute;top:236px;width:90px;text-align:center;font:400 15px/1 'Jost','NanumSquare',sans-serif;color:#8e8c7f;white-space:nowrap}
+.bd{margin:75px 0 0 25px;width:800px;text-align:center;font:400 24px/46.5px 'NanumSquare',sans-serif;color:#615e5a;white-space:pre-line}
+.aroma{margin-top:68px;height:638px}
+.aroma .lab{top:27px}
+.ar{position:absolute;left:0;right:0;height:75px}
+.ar .ring{position:absolute;left:80px;top:0;width:75px;height:75px;border-radius:50%;background:#f7f7eb;box-shadow:0 3px 5px rgba(0,0,0,.16)}
+.ar .dot{position:absolute;left:9px;top:9px;width:57px;height:57px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;white-space:nowrap;letter-spacing:-1px}
+.ar .dot.s3{font-size:15px;letter-spacing:-1.5px}
+.ar .pill{position:absolute;left:166px;top:5px;width:469px;height:65px;border-radius:33px;background:#f7f6eb;box-shadow:0 3px 5px rgba(0,0,0,.16)}
+.ar .bar{position:absolute;left:15px;top:14px;height:36px;border-radius:18px;box-shadow:inset 0 4px 5px rgba(0,0,0,.18)}
+img.poster{display:block;margin:74px 0 0 62px;width:726px;height:1063px;object-fit:cover}
+img.ft{display:block;margin:57px auto 65px}
+#status{font-size:12px;color:#8a857e;margin-top:8px;min-height:16px}
+body.bare .panel{display:none}
+body.bare .app{display:block;padding:0;max-width:none}
+@media (max-width:900px){.app{grid-template-columns:1fr}.panel{position:static;max-height:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="panel">
+<h1>FIKA 상세페이지 만들기</h1>
+<p class="sub">입력하면 오른쪽 미리보기가 바로 바뀝니다.</p>
+
+<h2>상품명</h2>
+<label class="l" for="in-en">영문</label><input type="text" id="in-en">
+<label class="l" for="in-ko">한글</label><input type="text" id="in-ko">
+
+<h2>컵노트 3가지</h2>
+<div class="cups" id="cups"></div>
+<div class="hint">단어를 쓰면 아이콘이 자동으로 들어갑니다. 없는 단어는 &quot;올리기&quot;로 직접 넣을 수 있어요.</div>
+
+<h2>강조 문단 (줄마다 핑크 띠)</h2>
+<textarea id="in-hl" rows="5"></textarea>
+<div class="hint">입력한 줄바꿈 그대로 나옵니다.</div>
+
+<h2>로스팅 포인트</h2>
+<div class="roast" id="roast"></div>
+
+<h2>본문</h2>
+<textarea id="in-bd" rows="6"></textarea>
+
+<h2>맛 그래프</h2>
+<div id="sls"></div>
+
+<h2>하단 포스터</h2>
+<div class="row">
+<label class="btn" for="in-poster">이미지 올리기</label><input type="file" id="in-poster" accept="image/*" hidden>
+<button class="btn" id="poster-reset" type="button">기본으로</button>
+</div>
+<div class="hint">권장 크기 726 × 1063px. 다른 비율은 가운데 기준으로 잘립니다.</div>
+
+<h2>저장</h2>
+<div class="row">
+<button class="btn main" id="save-all" type="button">PNG 한 장으로 저장</button>
+<button class="btn" id="save-split" type="button">나눠서 저장</button>
+</div>
+<label class="l" for="in-slice">나눌 높이(px)</label><input type="text" id="in-slice" value="1000" style="width:90px">
+<div id="status" role="status"></div>
+</aside>
+
+<main class="view"><div id="scaleWrap"><div id="stage">
+<img class="top" src="assets/top.jpg" alt="">
+<div class="ttl hand"><div class="en" id="o-en"></div><div class="ko" id="o-ko"></div></div>
+
+<div class="box cupbox"><div class="lab">CUP NOTE</div><div id="o-cups"></div></div>
+
+<div class="hl hand"><span id="o-hl"></span></div>
+
+<div class="box roastbox"><div class="lab">ROASTING POINT</div><div id="o-roast"></div></div>
+
+<div class="bd" id="o-bd"></div>
+
+<div class="box aroma"><div class="lab">AROMA</div><div id="o-aroma"></div></div>
+
+<img class="poster" id="o-poster" src="assets/poster-default.png" alt="">
+<img class="ft" src="assets/footer.png" alt="">
+</div></div></main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+
+/* ---------- 아이콘 사전 ---------- */
+/* 1) PSD에 들어 있던 내 스타일 아이콘 (assets/icons) */
+var OWN=[
+ ['꿀','honey'],['건포도','dried-fruit'],['건과일','dried-fruit'],['말린','dried-fruit'],['크랜베리','dried-fruit'],
+ ['카카오','cacao'],['코코아','cacao'],['블루베리','berries'],['베리','berries'],
+ ['살구','peach'],['복숭아','peach'],['피치','peach'],['라즈베리','raspberry'],['산딸기','raspberry'],
+ ['꽃','flowers'],['플로럴','flowers'],['초콜릿','chocolate'],['초콜렛','chocolate'],['빵','bread'],['베이커리','bread'],
+ ['견과','nuts'],['호두','nuts'],['아몬드','nuts'],['헤이즐넛','nuts'],['피칸','nuts']
+];
+/* 2) 없는 단어는 무료 아이콘(Twemoji)으로 대체. 새 단어는 여기에 한 줄 추가하면 됩니다. */
+var TW=[
+ ['장미','1f339'],['땅콩','1f95c'],['체리','1f352'],['오렌지','1f34a'],['귤','1f34a'],['딸기','1f353'],['레몬','1f34b'],
+ ['자스민','1f33c'],['사과','1f34e'],['포도','1f347'],['코코넛','1f965'],['바나나','1f34c'],['파인애플','1f34d'],['망고','1f96d'],
+ ['쿠키','1f36a'],['캐러멜','1f36e'],['카라멜','1f36e'],['사탕','1f36c'],['크루아상','1f950'],['허브','1f33f'],['녹차','1f375'],
+ ['홍차','1f375'],['우유','1f95b'],['케이크','1f370'],['토마토','1f345'],['수박','1f349'],['키위','1f95d'],['후추','1f336'],
+ ['와인','1f377'],['위스키','1f943'],['스모키','1f525'],['나무','1fab5'],['곡물','1f33e'],['커피','2615'],['배','1f350'],['밤','1f330']
+];
+function findIcon(t){
+ if(!t) return null;
+ for(var i=0;i<OWN.length;i++) if(t.indexOf(OWN[i][0])>-1) return {src:'assets/icons/'+OWN[i][1]+'.png',own:true};
+ for(var j=0;j<TW.length;j++) if(t.indexOf(TW[j][0])>-1) return {src:'https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/'+TW[j][1]+'.svg',own:false};
+ return null;
+}
+
+/* ---------- 상태 ---------- */
+var DEF={
+ en:'Colombia Medellin Supremo', ko:'콜롬비아 메데인 수프리모',
+ cups:['초콜릿','견과류','구운빵'],
+ hl:'메데인 커피는 콜롬비아에 마일드커피라는 인식을 갖게\n해준 커피입니다. 하는 이 원두는 부드러운 맛과\n묵직함을 가장 중요한 기준이라고 판단하기 때문에\n화려한 커피에 부담을 느끼는 분들에게는 최고의\n정답지가 될 것입니다.',
+ roast:3,
+ bd:'달콤함과 부드러움, 초콜렛 세 마디의 단어로 이 커피를 표현할 수 있습니다.\n영원한 봄의 도시에서 자란 커피답게 온화하고도\n잔잔한 맛의 표현이 일품입니다.\n중후한 느낌의 바디감에 액센트를 주는 적은 산미, 코코아의 달콤함과\n향나무의 절묘한 밸런스가 안정을 원하는\n당신의 커피에 감칠맛을 더해주는 향신료 역할을 합니다.',
+ ar:[61,36,67,23,83,71]
+};
+var S=JSON.parse(JSON.stringify(DEF));
+try{var saved=localStorage.getItem('fika-state'); if(saved){var p=JSON.parse(saved); for(var k in p) if(k in S) S[k]=p[k];}}catch(e){}
+var custom=[null,null,null]; /* 올린 아이콘은 저장하지 않음(용량) */
+var posterURL=null;
+
+var AR=[['향미','#7d4b4b'],['신맛','#7e9166'],['단맛','#db8382'],['쓴맛','#7d684b'],['바디감','#986a74'],['균형감','#658791']];
+var RN=['MEDIUM','HIGH','CITY','FULL CITY','FRENCH','ITALIAN'];
+var BEANX=[92,190,283,377,472,566];
+var CUPL=[35,255,475];
+
+/* ---------- 입력칸 만들기 ---------- */
+var cupsEl=$('cups');
+for(var i=0;i<3;i++){
+ (function(i){
+  var d=document.createElement('div');d.className='cup';
+  d.innerHTML='<input type="text" id="in-c'+i+'" aria-label="컵노트 '+(i+1)+'"><div class="pv" id="pv'+i+'"></div><div class="st" id="st'+i+'"></div>'+
+   '<label class="btn" style="font-size:11px;padding:3px 8px;margin-top:4px;display:inline-block" for="up'+i+'">올리기</label><input type="file" id="up'+i+'" accept="image/*" hidden>';
+  cupsEl.appendChild(d);
+ })(i);
+}
+RN.forEach(function(n,i){
+ var b=document.createElement('button');b.type='button';b.id='rb'+i;
+ b.innerHTML='<img src="assets/beans/b'+(i+1)+'.png" alt="">'+n;
+ b.onclick=function(){S.roast=i;render()};
+ $('roast').appendChild(b);
+});
+AR.forEach(function(a,i){
+ var d=document.createElement('div');d.className='sl';
+ d.innerHTML='<span>'+a[0]+'</span><input type="range" min="0" max="100" step="1" id="sl'+i+'" aria-label="'+a[0]+'"><span id="sv'+i+'"></span>';
+ $('sls').appendChild(d);
+});
+
+/* ---------- 미리보기 그리기 ---------- */
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function imgTag(src,cors){return '<img src="'+src+'"'+(cors?' crossorigin="anonymous"':'')+' alt="">'}
+
+function render(){
+ $('o-en').textContent=S.en; $('o-ko').textContent=S.ko;
+ /* 컵노트 */
+ var h='';
+ for(var i=0;i<3;i++){
+  var t=(S.cups[i]||'').trim(), f=findIcon(t), src=custom[i]?{src:custom[i],own:true}:f;
+  h+='<div class="cn" style="left:'+CUPL[i]+'px"><div class="ic">'+(src?imgTag(src.src,!src.own&&!custom[i]):'')+'</div><div class="tg">'+(t?'#'+esc(t):'')+'</div></div>';
+  $('pv'+i).innerHTML=src?imgTag(src.src,false):'<span style="font-size:11px;color:#bbb">아이콘 없음</span>';
+  var st=$('st'+i); st.textContent=custom[i]?'직접 올린 이미지':(f?(f.own?'내 아이콘':'무료 아이콘'):(t?'사전에 없음':'')); st.className='st'+((!f&&!custom[i]&&t)?' no':'');
+ }
+ $('o-cups').innerHTML=h;
+ /* 강조 문단 */
+ $('o-hl').textContent=S.hl;
+ /* 로스팅 */
+ var r='';
+ for(var b=0;b<6;b++){
+  r+='<img class="bean" src="assets/beans/b'+(b+1)+'.png" style="left:'+BEANX[b]+'px" alt="">';
+  r+='<div class="rn" style="left:'+(BEANX[b]+34-45)+'px">'+RN[b]+'</div>';
+  $('rb'+b).className=(b===S.roast)?'on':'';
+ }
+ r+='<img class="chk" src="assets/check.png" style="left:'+(BEANX[S.roast]+24)+'px" alt="">';
+ $('o-roast').innerHTML=r;
+ /* 본문 */
+ $('o-bd').textContent=S.bd;
+ /* 아로마 */
+ var a='';
+ for(var k=0;k<6;k++){
+  var top=118+k*88.6-37;
+  a+='<div class="ar" style="top:'+top.toFixed(1)+'px"><div class="pill"><div class="bar" style="width:'+Math.round(S.ar[k]/100*439)+'px;background:'+AR[k][1]+'"></div></div>'+
+     '<div class="ring"><div class="dot hand'+(AR[k][0].length>2?' s3':'')+'" style="background:'+AR[k][1]+'">'+AR[k][0]+'</div></div></div>';
+  $('sv'+k).textContent=S.ar[k];
+ }
+ $('o-aroma').innerHTML=a;
+ try{localStorage.setItem('fika-state',JSON.stringify(S))}catch(e){}
+ fit();
+}
+
+/* ---------- 입력 연결 ---------- */
+function bind(id,key){var e=$(id);e.value=S[key];e.addEventListener('input',function(){S[key]=e.value;render()})}
+bind('in-en','en');bind('in-ko','ko');bind('in-hl','hl');bind('in-bd','bd');
+for(var c=0;c<3;c++){(function(c){
+ var e=$('in-c'+c);e.value=S.cups[c];
+ e.addEventListener('input',function(){S.cups[c]=e.value;custom[c]=null;render()});
+ $('up'+c).addEventListener('change',function(ev){readFile(ev.target.files[0],function(u){custom[c]=u;render()})});
+})(c)}
+for(var q=0;q<6;q++){(function(q){
+ var e=$('sl'+q);e.value=S.ar[q];
+ e.addEventListener('input',function(){S.ar[q]=+e.value;render()});
+})(q)}
+function readFile(f,cb){if(!f)return;var r=new FileReader();r.onload=function(){cb(r.result)};r.readAsDataURL(f)}
+$('in-poster').addEventListener('change',function(ev){readFile(ev.target.files[0],function(u){$('o-poster').src=u})});
+$('poster-reset').addEventListener('click',function(){$('o-poster').src='assets/poster-default.png'});
+
+/* ---------- 화면 크기에 맞춰 축소 ---------- */
+var bare=location.hash==='#bare';
+if(bare)document.body.classList.add('bare');
+function fit(){
+ var st=$('stage'),w=$('scaleWrap');
+ var s=bare?1:Math.min(1,w.clientWidth/850);
+ st.style.transform='scale('+s+')';
+ w.style.height=Math.round(st.offsetHeight*s)+'px';
+}
+window.addEventListener('resize',fit);
+
+/* ---------- 저장 ---------- */
+function status(t){$('status').textContent=t}
+function capture(){
+ if(typeof html2canvas==='undefined'){status('저장 도구를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');return Promise.reject()}
+ var fp=document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve();
+ return fp.then(function(){
+  return html2canvas($('stage'),{scale:1,useCORS:true,backgroundColor:'#ebeae8',width:850,height:$('stage').offsetHeight,
+   onclone:function(d){var s=d.getElementById('stage');s.style.transform='none'}});
+ });
+}
+function dl(canvas,name){
+ return new Promise(function(res){
+  canvas.toBlob(function(b){
+   var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;
+   document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);res()},300);
+  },'image/png');
+ });
+}
+$('save-all').addEventListener('click',function(){
+ status('이미지를 만드는 중…');
+ capture().then(function(cv){return dl(cv,'detail.png')}).then(function(){status('저장했습니다.')}).catch(function(e){if(e)status('저장에 실패했습니다. 인터넷 주소(https)로 열었는지 확인해 주세요.')});
+});
+$('save-split').addEventListener('click',function(){
+ var hgt=Math.max(300,parseInt($('in-slice').value,10)||1000);
+ status('이미지를 만드는 중…');
+ capture().then(function(cv){
+  var n=Math.ceil(cv.height/hgt),p=Promise.resolve();
+  for(let i=0;i<n;i++){p=p.then(function(){
+   var part=document.createElement('canvas');part.width=cv.width;part.height=Math.min(hgt,cv.height-i*hgt);
+   part.getContext('2d').drawImage(cv,0,i*hgt,cv.width,part.height,0,0,cv.width,part.height);
+   status((i+1)+' / '+n+' 저장 중…');
+   return dl(part,'detail_'+String(i+1).padStart(2,'0')+'.png');
+  })}
+  return p.then(function(){status(n+'장 저장했습니다.')});
+ }).catch(function(e){if(e)status('저장에 실패했습니다. 인터넷 주소(https)로 열었는지 확인해 주세요.')});
+});
+
+render();
+window.addEventListener('load',fit);
+})();
+</script>
+</body>
+</html>
