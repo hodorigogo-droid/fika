@@ -74,9 +74,13 @@ textarea{resize:vertical;line-height:1.5}
 .ar .dot.s3{font-size:15px;letter-spacing:-1.5px}
 .ar .pill{position:absolute;left:166px;top:5px;width:469px;height:65px;border-radius:33px;background:#f7f6eb;box-shadow:0 3px 5px rgba(0,0,0,.16)}
 .ar .bar{position:absolute;left:15px;top:14px;height:36px;border-radius:18px;box-shadow:inset 0 4px 5px rgba(0,0,0,.18)}
-img.poster{display:block;margin:74px 0 0 62px;width:726px;height:1063px;object-fit:cover}
-img.ft{display:block;margin:57px auto 65px}
+img.ft{display:block;margin:74px auto 65px}
 #status{font-size:12px;color:#8a857e;margin-top:8px;min-height:16px}
+.drop{border:1.5px dashed #cfcac3;border-radius:10px;padding:14px 10px;text-align:center;font-size:12px;color:#8a857e;cursor:pointer;line-height:1.6;outline:none}
+.drop:hover,.drop:focus,.drop.on{border-color:#d98b86;background:#fbeeec}
+#ocr-img{display:none;max-width:100%;max-height:120px;margin:8px auto 0;border-radius:6px;border:1px solid #e3e0dc}
+#ocr-st{font-size:12px;color:#8a857e;margin-top:6px;min-height:16px}
+.ck{display:flex;gap:6px;align-items:center;font-size:12px;color:#7a756e;margin-top:6px}
 body.bare .panel{display:none}
 body.bare .app{display:block;padding:0;max-width:none}
 @media (max-width:900px){.app{grid-template-columns:1fr}.panel{position:static;max-height:none}}
@@ -87,6 +91,20 @@ body.bare .app{display:block;padding:0;max-width:none}
 <aside class="panel">
 <h1>FIKA 상세페이지 만들기</h1>
 <p class="sub">입력하면 오른쪽 미리보기가 바로 바뀝니다.</p>
+
+<h2>이미지에서 글자 가져오기</h2>
+<div class="drop" id="drop" tabindex="0" role="button" aria-label="이미지 붙여넣기 또는 선택">캡처한 이미지를 <b>Ctrl+V</b>로 붙여넣거나<br>여기를 눌러 이미지를 고르세요<br><span style="font-size:11px">(끌어다 놓아도 됩니다)</span></div>
+<input type="file" id="ocr-file" accept="image/*" hidden>
+<img id="ocr-img" alt="">
+<div id="ocr-st" role="status"></div>
+<textarea id="ocr-out" rows="5" placeholder="읽은 글자가 여기에 나옵니다. 틀린 글자는 고친 뒤 보내세요." style="margin-top:6px"></textarea>
+<label class="ck"><input type="checkbox" id="ocr-join"> 줄바꿈을 없애고 한 문장으로 합치기</label>
+<div class="row">
+<button class="btn" id="ocr-to-hl" type="button">강조 문단으로 보내기</button>
+<button class="btn" id="ocr-to-bd" type="button">본문으로 보내기</button>
+<button class="btn" id="ocr-copy" type="button">복사</button>
+</div>
+<div class="hint">한글은 정확도가 완벽하지 않아요. 선명하고 글자가 큰 캡처일수록 잘 읽습니다.</div>
 
 <h2>상품명</h2>
 <label class="l" for="in-en">영문</label><input type="text" id="in-en">
@@ -108,13 +126,6 @@ body.bare .app{display:block;padding:0;max-width:none}
 
 <h2>맛 그래프</h2>
 <div id="sls"></div>
-
-<h2>하단 포스터</h2>
-<div class="row">
-<label class="btn" for="in-poster">이미지 올리기</label><input type="file" id="in-poster" accept="image/*" hidden>
-<button class="btn" id="poster-reset" type="button">기본으로</button>
-</div>
-<div class="hint">권장 크기 726 × 1063px. 다른 비율은 가운데 기준으로 잘립니다.</div>
 
 <h2>저장</h2>
 <div class="row">
@@ -139,12 +150,12 @@ body.bare .app{display:block;padding:0;max-width:none}
 
 <div class="box aroma"><div class="lab">AROMA</div><div id="o-aroma"></div></div>
 
-<img class="poster" id="o-poster" src="assets/poster-default.png" alt="">
 <img class="ft" src="assets/footer.png" alt="">
 </div></div></main>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 (function(){
 var $=function(id){return document.getElementById(id)};
@@ -268,8 +279,6 @@ for(var q=0;q<6;q++){(function(q){
  e.addEventListener('input',function(){S.ar[q]=+e.value;render()});
 })(q)}
 function readFile(f,cb){if(!f)return;var r=new FileReader();r.onload=function(){cb(r.result)};r.readAsDataURL(f)}
-$('in-poster').addEventListener('change',function(ev){readFile(ev.target.files[0],function(u){$('o-poster').src=u})});
-$('poster-reset').addEventListener('click',function(){$('o-poster').src='assets/poster-default.png'});
 
 /* ---------- 화면 크기에 맞춰 축소 ---------- */
 var bare=location.hash==='#bare';
@@ -281,6 +290,71 @@ function fit(){
  w.style.height=Math.round(st.offsetHeight*s)+'px';
 }
 window.addEventListener('resize',fit);
+
+/* ---------- 이미지에서 글자 읽기 (브라우저 안에서 처리, 서버 불필요) ---------- */
+var ocrWorker=null;
+function ocrStatus(t){$('ocr-st').textContent=t}
+function getWorker(){
+ if(typeof Tesseract==='undefined') return Promise.reject(new Error('lib'));
+ if(!ocrWorker){
+  ocrWorker=Tesseract.createWorker('kor+eng',1,{logger:function(m){
+   if(m.status==='recognizing text') ocrStatus('글자 읽는 중… '+Math.round(m.progress*100)+'%');
+   else ocrStatus('준비 중… 처음 한 번은 1분 정도 걸릴 수 있어요');
+  }});
+ }
+ return ocrWorker;
+}
+function cleanText(t){
+ var lines=String(t||'').replace(/\r/g,'').split('\n').map(function(l){return l.replace(/[ \t]+/g,' ').trim()});
+ var out=lines.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+ if($('ocr-join').checked) out=out.replace(/\s*\n+\s*/g,' ');
+ return out;
+}
+var ocrRaw='';
+function runOCR(file){
+ if(!file) return;
+ var im=$('ocr-img');im.src=URL.createObjectURL(file);im.style.display='block';
+ ocrStatus('준비 중…');
+ Promise.resolve(getWorker()).then(function(w){return w.recognize(file)}).then(function(r){
+  ocrRaw=r.data.text||'';
+  $('ocr-out').value=cleanText(ocrRaw);
+  ocrStatus($('ocr-out').value?'완료. 틀린 글자를 고친 뒤 아래 버튼으로 보내세요.':'글자를 찾지 못했어요. 더 선명한 이미지로 다시 시도해 주세요.');
+ }).catch(function(){
+  ocrWorker=null;
+  ocrStatus('읽지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+ });
+}
+function imageFrom(dt){
+ if(!dt) return null;
+ if(dt.files&&dt.files.length){for(var i=0;i<dt.files.length;i++) if(/^image\//.test(dt.files[i].type)) return dt.files[i]}
+ if(dt.items){for(var j=0;j<dt.items.length;j++){var it=dt.items[j];if(it.kind==='file'&&/^image\//.test(it.type)) return it.getAsFile()}}
+ return null;
+}
+document.addEventListener('paste',function(e){
+ var f=imageFrom(e.clipboardData);
+ if(f){e.preventDefault();runOCR(f)}
+});
+var dz=$('drop');
+dz.addEventListener('click',function(){$('ocr-file').click()});
+dz.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();$('ocr-file').click()}});
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('on')});
+dz.addEventListener('dragleave',function(){dz.classList.remove('on')});
+dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('on');runOCR(imageFrom(e.dataTransfer))});
+$('ocr-file').addEventListener('change',function(e){runOCR(e.target.files[0]);e.target.value=''});
+$('ocr-join').addEventListener('change',function(){if(ocrRaw) $('ocr-out').value=cleanText(ocrRaw)});
+function sendTo(key,id){
+ var t=$('ocr-out').value.trim();
+ if(!t){ocrStatus('보낼 글자가 없습니다. 먼저 이미지를 붙여넣어 주세요.');return}
+ if(key==='hl') t=t.replace(/\n\s*\n+/g,'\n');
+ S[key]=t;$(id).value=t;render();ocrStatus('보냈습니다. 미리보기에서 확인하세요.');
+}
+$('ocr-to-hl').addEventListener('click',function(){sendTo('hl','in-hl')});
+$('ocr-to-bd').addEventListener('click',function(){sendTo('bd','in-bd')});
+$('ocr-copy').addEventListener('click',function(){
+ var t=$('ocr-out').value;
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){ocrStatus('복사했습니다.')},function(){$('ocr-out').select();ocrStatus('Ctrl+C로 복사해 주세요.')})}
+ else{$('ocr-out').select();ocrStatus('Ctrl+C로 복사해 주세요.')}
+});
 
 /* ---------- 저장 ---------- */
 function status(t){$('status').textContent=t}
